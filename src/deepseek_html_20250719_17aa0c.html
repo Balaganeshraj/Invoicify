@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Pro | Create & Share Professional Invoices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #6366F1;
+            --accent: #22C55E;
+            --bg-top: #F3F4F6;
+            --footer-bg: #6C757D;
+            --text: #111827;
+            --add-row: #28A745;
+            --add-category: #17A2B8;
+            --currency-picker: #FFC107;
+            --gray-200: #E5E7EB;
+            --gray-400: #9CA3AF;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                background-color: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 12px !important;
+            }
+            
+            .invoice-container {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                min-height: 100vh !important;
+            }
+            
+            .header, .footer {
+                padding: 12px 16px !important;
+            }
+            
+            .company-client-section, .meta-section {
+                padding: 12px 16px !important;
+            }
+            
+            .items-table th, .items-table td {
+                padding: 6px 8px !important;
+            }
+            
+            .subtotal-section {
+                padding: 12px 16px !important;
+            }
+            
+            .total-section {
+                padding: 12px 16px !important;
+            }
+            
+            .notes-section {
+                padding: 12px 16px !important;
+            }
+            
+            input, select, textarea {
+                border: none !important;
+                background: none !important;
+                padding: 0 !important;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                appearance: none;
+            }
+            
+            .delete-row {
+                display: none !important;
+            }
+        }
+        
+        .color-picker {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .color-picker::-webkit-color-swatch {
+            border-radius: 4px;
+            border: 1px solid var(--gray-200);
+        }
+        
+        .color-picker::-moz-color-swatch {
+            border-radius: 4px;
+            border: 1px solid var(--gray-200);
+        }
+        
+        .logo-upload-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border: 2px dashed var(--gray-400);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .logo-upload-container:hover {
+            border-color: var(--primary);
+        }
+        
+        .logo-preview {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+        }
+        
+        .logo-placeholder-text {
+            color: var(--gray-400);
+            font-size: 12px;
+            text-align: center;
+            padding: 8px;
+        }
+        
+        #logo-upload {
+            display: none;
+        }
+        
+        .share-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 10;
+            min-width: 200px;
+            padding: 8px;
+        }
+        
+        .share-dropdown.show {
+            display: block;
+        }
+        
+        .share-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .share-btn:hover {
+            background-color: var(--gray-200);
+        }
+        
+        .whatsapp-btn {
+            color: #25D366;
+        }
+        
+        .email-btn {
+            color: #EA4335;
+        }
+        
+        .emailer-btn {
+            color: #4285F4;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 font-sans text-gray-900">
+    <div class="max-w-4xl mx-auto">
+        <!-- Settings Panel -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-4 no-print">
+            <h2 class="text-lg font-semibold mb-4">Invoice Settings</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Logo Upload -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Company Logo</label>
+                    <div class="logo-upload-container" id="logo-upload-container">
+                        <div class="logo-placeholder-text">Click to upload logo</div>
+                        <img id="logo-preview" class="logo-preview" alt="Logo Preview">
+                    </div>
+                    <input type="file" id="logo-upload" accept="image/*">
+                </div>
+                
+                <!-- Color Customization -->
+                <div>
+                    <label class="block text-sm font-medium mb-2">Color Scheme</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs mb-1">Primary Color</label>
+                            <input type="color" class="color-picker" id="primary-color" value="#4F46E5">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">Accent Color</label>
+                            <input type="color" class="color-picker" id="accent-color" value="#22C55E">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">Header BG</label>
+                            <input type="color" class="color-picker" id="header-bg" value="#F3F4F6">
+                        </div>
+                        <div>
+                            <label class="block text-xs mb-1">Footer BG</label>
+                            <input type="color" class="color-picker" id="footer-bg" value="#6C757D">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Invoice Container -->
+        <div class="invoice-container bg-white rounded-lg shadow-md overflow-hidden">
+            <!-- Header -->
+            <div class="header p-6 bg-[var(--bg-top)]" style="background-color: var(--bg-top);">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <div id="invoice-logo-container">
+                            <div class="logo-placeholder bg-gray-200 w-16 h-16 flex items-center justify-center rounded text-gray-500">
+                                No Logo
+                            </div>
+                        </div>
+                        <div>
+                            <input type="text" class="text-2xl font-bold text-[var(--text)] bg-transparent border-b border-transparent focus:border-gray-300 focus:outline-none" value="INVOICE" id="invoice-title">
+                            <p class="text-sm text-gray-600">Your Professional Invoice</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 no-print">
+                        <div class="relative">
+                            <button id="share-btn" class="px-4 py-2 bg-[var(--primary)] text-white rounded-md hover:bg-[var(--primary-light)] flex items-center gap-2">
+                                <i class="fas fa-share"></i>
+                                Share
+                            </button>
+                            <div class="share-dropdown" id="share-dropdown">
+                                <div class="share-btn whatsapp-btn" id="whatsapp-share">
+                                    <i class="fab fa-whatsapp"></i>
+                                    WhatsApp
+                                </div>
+                                <div class="share-btn email-btn" id="email-share">
+                                    <i class="fas fa-envelope"></i>
+                                    Email as PDF
+                                </div>
+                                <div class="share-btn emailer-btn" id="emailer-share">
+                                    <i class="fas fa-paper-plane"></i>
+                                    Send Emailer
+                                </div>
+                            </div>
+                        </div>
+                        <button id="print-btn" class="px-4 py-2 bg-[var(--accent)] text-white rounded-md hover:opacity-90 flex items-center gap-2">
+                            <i class="fas fa-print"></i>
+                            Print
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Company & Client Info -->
+            <div class="company-client-section p-6 border-b border-gray-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Company Info -->
+                    <div>
+                        <h3 class="text-xs uppercase font-semibold text-gray-500 mb-3">From</h3>
+                        <div class="space-y-2">
+                            <input type="text" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="Company Name" value="Your Company Name">
+                            <input type="text" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="Address" value="123 Business Street">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" class="p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="City" value="New York">
+                                <input type="text" class="p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="ZIP Code" value="10001">
+                            </div>
+                            <input type="text" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="Email" value="contact@company.com">
+                            <input type="text" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="Phone" value="(123) 456-7890">
+                        </div>
+                    </div>
+                    
+                    <!-- Client Info -->
+                    <div>
+                        <h3 class="text-xs uppercase font-semibold text-gray-500 mb-3">Bill To</h3>
+                        <div class="space-y-2">
+                            <input type="text" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="Client Name" value="Client Company">
+                            <input type="text" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="Address" value="456 Client Avenue">
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="text" class="p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="City" value="San Francisco">
+                                <input type="text" class="p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="ZIP Code" value="94103">
+                            </div>
+                            <input type="text" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" placeholder="Email" value="client@email.com">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Invoice Meta -->
+            <div class="meta-section p-6 border-b border-gray-200 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="text-xs uppercase font-semibold text-gray-500 block mb-1">Invoice Number</label>
+                    <input type="text" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="INV-2023-001">
+                </div>
+                <div>
+                    <label class="text-xs uppercase font-semibold text-gray-500 block mb-1">Date</label>
+                    <input type="date" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="2023-07-19">
+                </div>
+                <div>
+                    <label class="text-xs uppercase font-semibold text-gray-500 block mb-1">Due Date</label>
+                    <input type="date" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="2023-08-19">
+                </div>
+            </div>
+            
+            <!-- Currency Selector -->
+            <div class="p-4 border-b border-gray-200 bg-gray-50 no-print">
+                <div class="flex items-center gap-4">
+                    <label class="text-sm font-medium">Currency:</label>
+                    <select id="currency-select" class="p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)] bg-[var(--currency-picker)]" style="background-color: var(--currency-picker);">
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="JPY">JPY (¥)</option>
+                        <option value="AUD">AUD (A$)</option>
+                        <option value="CAD">CAD (C$)</option>
+                        <option value="INR">INR (₹)</option>
+                        <option value="LKR">LKR (Rs)</option>
+                    </select>
+                    <button id="add-row-btn" class="px-4 py-2 bg-[var(--add-row)] text-white rounded-md hover:opacity-90 flex items-center gap-2 ml-auto">
+                        <i class="fas fa-plus"></i>
+                        Add Row
+                    </button>
+                    <button id="add-category-btn" class="px-4 py-2 bg-[var(--add-category)] text-white rounded-md hover:opacity-90 flex items-center gap-2">
+                        <i class="fas fa-tag"></i>
+                        Add Category
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Items Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full items-table">
+                    <thead>
+                        <tr class="bg-gray-100">
+                            <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Description</th>
+                            <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Category</th>
+                            <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Quantity</th>
+                            <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Rate</th>
+                            <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase">Amount</th>
+                            <th class="p-3 text-left text-xs font-semibold text-gray-600 uppercase no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="items-body">
+                        <!-- Sample Row 1 -->
+                        <tr class="border-b border-gray-200">
+                            <td class="p-3">
+                                <select class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+                                    <option value="">Custom Service</option>
+                                    <optgroup label="Print Services">
+                                        <option selected>Logo Design</option>
+                                        <option>Business Cards</option>
+                                        <option>Brochures</option>
+                                        <option>Flyers</option>
+                                    </optgroup>
+                                    <optgroup label="Video Services">
+                                        <option>Promotional Video</option>
+                                        <option>Product Video</option>
+                                        <option>Testimonial Video</option>
+                                    </optgroup>
+                                    <optgroup label="Digital Services">
+                                        <option>Website Design</option>
+                                        <option>Social Media</option>
+                                        <option>UI/UX Design</option>
+                                    </optgroup>
+                                </select>
+                            </td>
+                            <td class="p-3">
+                                <select class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+                                    <option selected>Print</option>
+                                    <option>Video</option>
+                                    <option>Digital</option>
+                                    <option>Other</option>
+                                </select>
+                            </td>
+                            <td class="p-3">
+                                <input type="number" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="1" min="1">
+                            </td>
+                            <td class="p-3">
+                                <input type="number" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="500.00" min="0" step="0.01">
+                            </td>
+                            <td class="p-3 font-medium">$500.00</td>
+                            <td class="p-3 text-red-500 cursor-pointer no-print delete-row"><i class="fas fa-times"></i></td>
+                        </tr>
+                        
+                        <!-- Sample Row 2 -->
+                        <tr class="border-b border-gray-200">
+                            <td class="p-3">
+                                <select class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+                                    <option value="">Custom Service</option>
+                                    <optgroup label="Print Services">
+                                        <option>Logo Design</option>
+                                        <option selected>Business Cards</option>
+                                        <option>Brochures</option>
+                                        <option>Flyers</option>
+                                    </optgroup>
+                                    <optgroup label="Video Services">
+                                        <option>Promotional Video</option>
+                                        <option>Product Video</option>
+                                        <option>Testimonial Video</option>
+                                    </optgroup>
+                                    <optgroup label="Digital Services">
+                                        <option>Website Design</option>
+                                        <option>Social Media</option>
+                                        <option>UI/UX Design</option>
+                                    </optgroup>
+                                </select>
+                            </td>
+                            <td class="p-3">
+                                <select class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+                                    <option selected>Print</option>
+                                    <option>Video</option>
+                                    <option>Digital</option>
+                                    <option>Other</option>
+                                </select>
+                            </td>
+                            <td class="p-3">
+                                <input type="number" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="1" min="1">
+                            </td>
+                            <td class="p-3">
+                                <input type="number" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="300.00" min="0" step="0.01">
+                            </td>
+                            <td class="p-3 font-medium">$300.00</td>
+                            <td class="p-3 text-red-500 cursor-pointer no-print delete-row"><i class="fas fa-times"></i></td>
+                        </tr>
+                        
+                        <!-- Sample Row 3 -->
+                        <tr class="border-b border-gray-200">
+                            <td class="p-3">
+                                <select class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+                                    <option value="">Custom Service</option>
+                                    <optgroup label="Print Services">
+                                        <option>Logo Design</option>
+                                        <option>Business Cards</option>
+                                        <option>Brochures</option>
+                                        <option>Flyers</option>
+                                    </optgroup>
+                                    <optgroup label="Video Services">
+                                        <option selected>Promotional Video</option>
+                                        <option>Product Video</option>
+                                        <option>Testimonial Video</option>
+                                    </optgroup>
+                                    <optgroup label="Digital Services">
+                                        <option>Website Design</option>
+                                        <option>Social Media</option>
+                                        <option>UI/UX Design</option>
+                                    </optgroup>
+                                </select>
+                            </td>
+                            <td class="p-3">
+                                <select class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+                                    <option>Print</option>
+                                    <option selected>Video</option>
+                                    <option>Digital</option>
+                                    <option>Other</option>
+                                </select>
+                            </td>
+                            <td class="p-3">
+                                <input type="number" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="1" min="1">
+                            </td>
+                            <td class="p-3">
+                                <input type="number" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="1200.00" min="0" step="0.01">
+                            </td>
+                            <td class="p-3 font-medium">$1,200.00</td>
+                            <td class="p-3 text-red-500 cursor-pointer no-print delete-row"><i class="fas fa-times"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Subtotals -->
+            <div class="subtotal-section p-6 grid grid-cols-1 md:grid-cols-4 gap-4 border-b border-gray-200">
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="text-sm font-semibold text-gray-600 mb-2">Print Subtotal</h3>
+                    <p class="text-lg font-semibold">$800.00</p>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="text-sm font-semibold text-gray-600 mb-2">Video Subtotal</h3>
+                    <p class="text-lg font-semibold">$1,200.00</p>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="text-sm font-semibold text-gray-600 mb-2">Digital Subtotal</h3>
+                    <p class="text-lg font-semibold">$0.00</p>
+                </div>
+                <div class="bg-gray-100 p-4 rounded-lg">
+                    <h3 class="text-sm font-semibold text-gray-600 mb-2">Other Subtotal</h3>
+                    <p class="text-lg font-semibold">$0.00</p>
+                </div>
+            </div>
+            
+            <!-- Grand Total -->
+            <div class="total-section p-6 bg-[var(--primary)] text-white">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-xl font-semibold">Grand Total</h2>
+                    <p class="text-2xl font-bold">$2,000.00</p>
+                </div>
+            </div>
+            
+            <!-- Notes -->
+            <div class="notes-section p-6">
+                <h3 class="text-xs uppercase font-semibold text-gray-500 mb-3">Notes & Terms</h3>
+                <textarea class="w-full p-3 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" rows="3">Payment due within 30 days. Please make checks payable to Your Company Name.</textarea>
+            </div>
+            
+            <!-- Footer -->
+            <div class="footer p-6 bg-[var(--footer-bg)] text-white" style="background-color: var(--footer-bg);">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p class="text-sm" id="footer-text">© 2023 Your Company Name. All rights reserved.</p>
+                    <div class="flex gap-4 no-print">
+                        <input type="text" id="footer-input" class="p-2 bg-gray-600 text-white rounded focus:outline-none focus:ring-1 focus:ring-[var(--accent)]" value="Your Company Name">
+                        <button id="update-footer-btn" class="px-3 py-1 bg-[var(--accent)] text-white rounded text-sm hover:opacity-90">
+                            Update Footer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Currency symbol mapping
+            const currencySymbols = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥',
+                'AUD': 'A$',
+                'CAD': 'C$',
+                'INR': '₹',
+                'LKR': 'Rs'
+            };
+            
+            let currentCurrency = 'USD';
+            let currentSymbol = '$';
+            
+            // Set up currency selector
+            const currencySelect = document.getElementById('currency-select');
+            currencySelect.addEventListener('change', function() {
+                currentCurrency = this.value;
+                currentSymbol = currencySymbols[currentCurrency] || '$';
+                updateCurrencySymbols();
+                calculateTotals();
+            });
+            
+            function updateCurrencySymbols() {
+                document.querySelectorAll('.items-table td:nth-child(5), .subtotal-section p, .total-section p').forEach(el => {
+                    const amount = el.textContent.replace(/[^0-9.-]+/g,"");
+                    el.textContent = currentSymbol + amount;
+                });
+            }
+            
+            // Logo Upload
+            const logoUpload = document.getElementById('logo-upload');
+            const logoPreview = document.getElementById('logo-preview');
+            const logoUploadContainer = document.getElementById('logo-upload-container');
+            const logoPlaceholder = document.querySelector('.logo-placeholder');
+            
+            logoUploadContainer.addEventListener('click', function() {
+                logoUpload.click();
+            });
+            
+            logoUpload.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(event) {
+                        logoPreview.src = event.target.result;
+                        logoPreview.style.display = 'block';
+                        logoPlaceholder.style.display = 'none';
+                        
+                        // Update invoice logo
+                        const invoiceLogoContainer = document.getElementById('invoice-logo-container');
+                        invoiceLogoContainer.innerHTML = `<img src="${event.target.result}" alt="Company Logo" class="w-16 h-16 object-contain">`;
+                        
+                        // Save to localStorage
+                        localStorage.setItem('invoice-logo', event.target.result);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Load saved logo
+            const savedLogo = localStorage.getItem('invoice-logo');
+            if (savedLogo) {
+                logoPreview.src = savedLogo;
+                logoPreview.style.display = 'block';
+                logoPlaceholder.style.display = 'none';
+                document.getElementById('invoice-logo-container').innerHTML = `<img src="${savedLogo}" alt="Company Logo" class="w-16 h-16 object-contain">`;
+            }
+            
+            // Color Customization
+            const colorPickers = {
+                'primary': document.getElementById('primary-color'),
+                'accent': document.getElementById('accent-color'),
+                'bg-top': document.getElementById('header-bg'),
+                'footer-bg': document.getElementById('footer-bg'),
+                'add-row': document.getElementById('add-row-color'),
+                'add-category': document.getElementById('add-category-color'),
+                'currency-picker': document.getElementById('currency-picker-color')
+            };
+            
+            Object.entries(colorPickers).forEach(([key, picker]) => {
+                if (picker) {
+                    picker.addEventListener('input', function() {
+                        document.documentElement.style.setProperty(`--${key}`, this.value);
+                        
+                        // Update elements that use these colors
+                        if (key === 'primary') {
+                            document.documentElement.style.setProperty('--primary-light', lightenColor(this.value, 20));
+                        }
+                        
+                        // Save to localStorage
+                        localStorage.setItem(`invoice-${key}-color`, this.value);
+                    });
+                    
+                    // Load saved colors
+                    const savedColor = localStorage.getItem(`invoice-${key}-color`);
+                    if (savedColor) {
+                        picker.value = savedColor;
+                        document.documentElement.style.setProperty(`--${key}`, savedColor);
+                        
+                        if (key === 'primary') {
+                            document.documentElement.style.setProperty('--primary-light', lightenColor(savedColor, 20));
+                        }
+                    }
+                }
+            });
+            
+            // Helper function to lighten colors
+            function lightenColor(color, percent) {
+                const num = parseInt(color.replace('#', ''), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                
+                return '#' + (
+                    0x1000000 +
+                    (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+                    (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+                    (B < 255 ? (B < 1 ? 0 : B) : 255)
+                ).toString(16).slice(1);
+            }
+            
+            // Add row functionality
+            document.getElementById('add-row-btn').addEventListener('click', function() {
+                const tbody = document.getElementById('items-body');
+                const newRow = document.createElement('tr');
+                newRow.className = 'border-b border-gray-200';
+                newRow.innerHTML = `
+                    <td class="p-3">
+                        <select class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+                            <option value="">Custom Service</option>
+                            <optgroup label="Print Services">
+                                <option>Logo Design</option>
+                                <option>Business Cards</option>
+                                <option>Brochures</option>
+                                <option>Flyers</option>
+                            </optgroup>
+                            <optgroup label="Video Services">
+                                <option>Promotional Video</option>
+                                <option>Product Video</option>
+                                <option>Testimonial Video</option>
+                            </optgroup>
+                            <optgroup label="Digital Services">
+                                <option>Website Design</option>
+                                <option>Social Media</option>
+                                <option>UI/UX Design</option>
+                            </optgroup>
+                        </select>
+                    </td>
+                    <td class="p-3">
+                        <select class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+                            <option>Print</option>
+                            <option>Video</option>
+                            <option>Digital</option>
+                            <option>Other</option>
+                        </select>
+                    </td>
+                    <td class="p-3">
+                        <input type="number" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="1" min="1">
+                    </td>
+                    <td class="p-3">
+                        <input type="number" class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" value="0.00" min="0" step="0.01">
+                    </td>
+                    <td class="p-3 font-medium">${currentSymbol}0.00</td>
+                    <td class="p-3 text-red-500 cursor-pointer no-print delete-row"><i class="fas fa-times"></i></td>
+                `;
+                tbody.appendChild(newRow);
+                
+                // Add event listeners to new row
+                newRow.querySelector('.delete-row').addEventListener('click', function() {
+                    tbody.removeChild(newRow);
+                    calculateTotals();
+                });
+                
+                const inputs = newRow.querySelectorAll('input');
+                inputs.forEach(input => {
+                    input.addEventListener('input', calculateTotals);
+                });
+                
+                const selects = newRow.querySelectorAll('select');
+                selects.forEach(select => {
+                    select.addEventListener('change', calculateTotals);
+                });
+            });
+            
+            // Add category functionality
+            document.getElementById('add-category-btn').addEventListener('click', function() {
+                const newCategory = prompt('Enter new category name:');
+                if (newCategory && newCategory.trim() !== '') {
+                    // Add to all category selects
+                    document.querySelectorAll('.items-table td:nth-child(2) select').forEach(select => {
+                        const option = document.createElement('option');
+                        option.text = newCategory;
+                        option.value = newCategory;
+                        select.appendChild(option);
+                    });
+                    
+                    // Add new subtotal box
+                    const subtotalSection = document.querySelector('.subtotal-section');
+                    const newBox = document.createElement('div');
+                    newBox.className = 'bg-gray-100 p-4 rounded-lg';
+                    newBox.innerHTML = `
+                        <h3 class="text-sm font-semibold text-gray-600 mb-2">${newCategory} Subtotal</h3>
+                        <p class="text-lg font-semibold">${currentSymbol}0.00</p>
+                    `;
+                    subtotalSection.appendChild(newBox);
+                }
+            });
+            
+            // Delete row functionality
+            document.querySelectorAll('.delete-row').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('tr').remove();
+                    calculateTotals();
+                });
+            });
+            
+            // Print functionality
+            document.getElementById('print-btn').addEventListener('click', function() {
+                window.print();
+            });
+            
+            // Share dropdown toggle
+            document.getElementById('share-btn').addEventListener('click', function(e) {
+                e.stopPropagation();
+                document.getElementById('share-dropdown').classList.toggle('show');
+            });
+            
+            // Close share dropdown when clicking outside
+            document.addEventListener('click', function() {
+                document.getElementById('share-dropdown').classList.remove('show');
+            });
+            
+            // WhatsApp share
+            document.getElementById('whatsapp-share').addEventListener('click', function() {
+                // Generate PDF first
+                generatePDF().then(pdfData => {
+                    // For WhatsApp, we'll share as image (PDF sharing not directly supported)
+                    html2canvas(document.querySelector('.invoice-container')).then(canvas => {
+                        const image = canvas.toDataURL('image/png');
+                        const link = `https://wa.me/?text=${encodeURIComponent('Please find attached invoice')}`;
+                        // Note: WhatsApp Web doesn't support direct image sharing, this would work better on mobile
+                        window.open(link, '_blank');
+                        
+                        // Alternative for mobile
+                        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                            const a = document.createElement('a');
+                            a.href = image;
+                            a.download = 'invoice.png';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            alert('Please attach the downloaded image to your WhatsApp message');
+                        }
+                    });
+                });
+            });
+            
+            // Email as PDF
+            document.getElementById('email-share').addEventListener('click', function() {
+                generatePDF().then(pdfData => {
+                    const subject = encodeURIComponent('Invoice from Your Company');
+                    const body = encodeURIComponent('Please find attached invoice.\n\nRegards,\nYour Company');
+                    const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+                    
+                    // Note: Attachments don't work with mailto links, this would need a backend service
+                    window.open(mailtoLink, '_blank');
+                    alert('Please attach the downloaded PDF to your email');
+                });
+            });
+            
+            // Emailer (branded)
+            document.getElementById('emailer-share').addEventListener('click', function() {
+                generatePDF().then(pdfData => {
+                    // For demo purposes, we'll show the HTML template
+                    const emailerHTML = `
+                        <html>
+                        <head>
+                            <style>
+                                body { font-family: Arial, sans-serif; line-height: 1.6; }
+                                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                                .header { background-color: var(--primary); color: white; padding: 20px; text-align: center; }
+                                .content { padding: 20px; background-color: #f9f9f9; }
+                                .footer { padding: 10px; text-align: center; font-size: 12px; color: #666; }
+                                .btn { display: inline-block; padding: 10px 20px; background-color: var(--accent); color: white; text-decoration: none; border-radius: 4px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <div class="header">
+                                    <h1>Your Invoice is Ready</h1>
+                                </div>
+                                <div class="content">
+                                    <p>Dear Client,</p>
+                                    <p>Please find your invoice attached for the services provided.</p>
+                                    <p>Total Amount Due: <strong>${document.querySelector('.total-amount').textContent}</strong></p>
+                                    <p>Due Date: <strong>${document.querySelector('.meta-section input[type="date"]:nth-child(2)').value}</strong></p>
+                                    <p style="text-align: center; margin: 20px 0;">
+                                        <a href="#" class="btn">Pay Now</a>
+                                    </p>
+                                    <p>Thank you for your business!</p>
+                                </div>
+                                <div class="footer">
+                                    <p>© ${new Date().getFullYear()} ${document.getElementById('footer-input').value}. All rights reserved.</p>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                    `;
+                    
+                    const win = window.open('', '_blank');
+                    win.document.write(emailerHTML);
+                    win.document.close();
+                });
+            });
+            
+            // Generate PDF function
+            async function generatePDF() {
+                return new Promise((resolve) => {
+                    html2canvas(document.querySelector('.invoice-container')).then(canvas => {
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new jsPDF('p', 'mm', 'a4');
+                        const imgWidth = 210; // A4 width in mm
+                        const pageHeight = 295; // A4 height in mm
+                        const imgHeight = canvas.height * imgWidth / canvas.width;
+                        let heightLeft = imgHeight;
+                        let position = 0;
+                        
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                        
+                        while (heightLeft >= 0) {
+                            position = heightLeft - imgHeight;
+                            pdf.addPage();
+                            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                            heightLeft -= pageHeight;
+                        }
+                        
+                        pdf.save('invoice.pdf');
+                        resolve(pdf.output('datauristring'));
+                    });
+                });
+            }
+            
+            // Calculate totals when inputs change
+            document.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('input', calculateTotals);
+                input.addEventListener('change', calculateTotals);
+            });
+            
+            // Initial calculation
+            calculateTotals();
+            
+            function calculateTotals() {
+                let printTotal = 0;
+                let videoTotal = 0;
+                let digitalTotal = 0;
+                let otherTotal = 0;
+                let grandTotal = 0;
+                
+                // Calculate line items
+                document.querySelectorAll('#items-body tr').forEach(row => {
+                    const qty = parseFloat(row.querySelector('td:nth-child(3) input').value) || 0;
+                    const rate = parseFloat(row.querySelector('td:nth-child(4) input').value) || 0;
+                    const total = qty * rate;
+                    row.querySelector('td:nth-child(5)').textContent = currentSymbol + total.toFixed(2);
+                    
+                    // Categorize
+                    const category = row.querySelector('td:nth-child(2) select').value;
+                    if (category === 'Print') {
+                        printTotal += total;
+                    } else if (category === 'Video') {
+                        videoTotal += total;
+                    } else if (category === 'Digital') {
+                        digitalTotal += total;
+                    } else {
+                        otherTotal += total;
+                    }
+                    
+                    grandTotal += total;
+                });
+                
+                // Update subtotals
+                const subtotalBoxes = document.querySelectorAll('.subtotal-section > div');
+                if (subtotalBoxes.length >= 4) {
+                    subtotalBoxes[0].querySelector('p').textContent = currentSymbol + printTotal.toFixed(2);
+                    subtotalBoxes[1].querySelector('p').textContent = currentSymbol + videoTotal.toFixed(2);
+                    subtotalBoxes[2].querySelector('p').textContent = currentSymbol + digitalTotal.toFixed(2);
+                    subtotalBoxes[3].querySelector('p').textContent = currentSymbol + otherTotal.toFixed(2);
+                }
+                
+                // Update grand total
+                document.querySelector('.total-section p').textContent = currentSymbol + grandTotal.toFixed(2);
+            }
+            
+            // Footer text update
+            const footerText = document.getElementById('footer-text');
+            const footerInput = document.getElementById('footer-input');
+            const updateFooterBtn = document.getElementById('update-footer-btn');
+            
+            updateFooterBtn.addEventListener('click', function() {
+                const year = new Date().getFullYear();
+                footerText.textContent = `© ${year} ${footerInput.value}. All rights reserved.`;
+                localStorage.setItem('invoice-footer', footerInput.value);
+            });
+            
+            // Load saved footer text
+            const savedFooter = localStorage.getItem('invoice-footer');
+            if (savedFooter) {
+                footerInput.value = savedFooter;
+                const year = new Date().getFullYear();
+                footerText.textContent = `© ${year} ${savedFooter}. All rights reserved.`;
+            }
+            
+            // Load saved invoice title
+            const invoiceTitle = document.getElementById('invoice-title');
+            const savedTitle = localStorage.getItem('invoice-title');
+            if (savedTitle) {
+                invoiceTitle.value = savedTitle;
+            }
+            
+            invoiceTitle.addEventListener('change', function() {
+                localStorage.setItem('invoice-title', this.value);
+            });
+        });
+    </script>
+</body>
+</html>
