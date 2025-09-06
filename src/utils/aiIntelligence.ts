@@ -342,15 +342,7 @@ const checkFormatting = (
 };
 
 export const getSmartItemSuggestions = (description: string, type: 'service' | 'sales'): string[] => {
-  const serviceSuggestions: { [key: string]: string[] } = {
-    'web': ['Website Design', 'Frontend Development', 'Backend Development', 'SEO Optimization', 'Website Maintenance'],
-    'design': ['Logo Design', 'Brand Identity', 'UI/UX Design', 'Graphic Design', 'Print Design'],
-    'marketing': ['Social Media Management', 'Content Creation', 'Email Marketing', 'PPC Advertising', 'Marketing Strategy'],
-    'consulting': ['Business Consultation', 'Strategy Planning', 'Market Research', 'Process Optimization', 'Training'],
-    'development': ['Mobile App Development', 'API Development', 'Database Design', 'System Integration', 'Software Testing'],
-    'legal': ['Legal Consultation', 'Contract Review', 'Document Preparation', 'Legal Research', 'Compliance Review'],
-    'accounting': ['Bookkeeping', 'Tax Preparation', 'Financial Analysis', 'Audit Services', 'Payroll Processing']
-  };
+  const serviceSuggestions: { [key: string]: string[] } = {};
 
   const salesSuggestions: { [key: string]: string[] } = {
     'software': ['Software License', 'SaaS Subscription', 'Mobile App', 'Desktop Application', 'Plugin/Extension'],
@@ -360,7 +352,7 @@ export const getSmartItemSuggestions = (description: string, type: 'service' | '
     'subscription': ['Monthly Subscription', 'Annual Subscription', 'Premium Plan', 'Enterprise License', 'Support Package']
   };
 
-  const suggestions = type === 'service' ? serviceSuggestions : salesSuggestions;
+  const suggestions = type === 'sales' ? salesSuggestions : serviceSuggestions;
   const lowerDesc = description.toLowerCase();
   
   for (const [key, items] of Object.entries(suggestions)) {
@@ -370,6 +362,6 @@ export const getSmartItemSuggestions = (description: string, type: 'service' | '
   }
 
   return type === 'service' 
-    ? ['Consultation', 'Project Management', 'Research & Analysis', 'Implementation', 'Support']
+    ? []
     : ['Product', 'License', 'Subscription', 'Package', 'Bundle'];
 };

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Invoice, InvoiceItem } from '../types/invoice';
 import { Plus, Trash2, User, Building, FileText, ShoppingCart } from 'lucide-react';
-import { getSmartItemSuggestions } from '../utils/aiIntelligence';
+import { ServiceSelector } from './ServiceSelector';
 import { CurrencySelector } from './CurrencySelector';
 import { CountrySelector } from './CountrySelector';
 import { getTaxRuleByCountry } from '../data/taxRules';
@@ -14,9 +14,6 @@ interface InvoiceFormProps {
 }
 
 export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice }) => {
-  const [itemSuggestions, setItemSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [activeItemId, setActiveItemId] = useState<string>('');
 
   const addItem = () => {
     const newItem: InvoiceItem = {
@@ -46,21 +43,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
     updateInvoice({ items: invoice.items.filter(item => item.id !== id) });
   };
 
-  const handleDescriptionChange = (id: string, description: string) => {
-    updateItem(id, { description });
-    if (description.length > 2) {
-      const suggestions = getSmartItemSuggestions(description, invoice.type);
-      setItemSuggestions(suggestions);
-      setShowSuggestions(true);
-      setActiveItemId(id);
-    } else {
-      setShowSuggestions(false);
+  const handleServiceChange = (id: string, description: string, rate?: number) => {
+    const updates: Partial<InvoiceItem> = { description };
+    if (rate && rate > 0) {
+      updates.rate = rate;
     }
-  };
-
-  const applySuggestion = (suggestion: string) => {
-    updateItem(activeItemId, { description: suggestion });
-    setShowSuggestions(false);
+    updateItem(id, updates);
   };
 
   const handleCountryChange = (countryCode: string) => {
@@ -296,29 +284,30 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
           {invoice.items.map((item) => (
             <div key={item.id} className="relative">
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                <div className="md:col-span-5 relative">
-                  <input
-                    type="text"
-                    value={item.description}
-                    onChange={(e) => handleDescriptionChange(item.id, e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder={invoice.type === 'service' ? 'Service description' : 'Product description'}
-                  />
-                  {showSuggestions && itemSuggestions.length > 0 && activeItemId === item.id && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                      {itemSuggestions.map((suggestion, index) => (
-                        <button
-                          key={index}
-                          onClick={() => applySuggestion(suggestion)}
-                          className="w-full px-3 py-2 text-left hover:bg-gray-50 text-sm"
-                        >
-                          {suggestion}
-                        </button>
-                      ))}
-                    </div>
+                <div className="md:col-span-5">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    {invoice.type === 'service' ? 'Service Description' : 'Product Description'}
+                  </label>
+                  {invoice.type === 'service' ? (
+                    <ServiceSelector
+                      value={item.description}
+                      onChange={(description, rate) => handleServiceChange(item.id, description, rate)}
+                      className="w-full"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={item.description}
+                      onChange={(e) => updateItem(item.id, { description: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Product description"
+                    />
                   )}
                 </div>
                 <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    {invoice.type === 'service' ? 'Hours' : 'Quantity'}
+                  </label>
                   <input
                     type="number"
                     value={item.quantity}
@@ -330,9 +319,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
                   />
                 </div>
                 <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    {invoice.type === 'service' ? 'Rate (per hour)' : 'Unit Price'}
+                  </label>
                   <input
                     type="number"
-                    value={item.rate}
+                    value={item.description}
                     onChange={(e) => updateItem(item.id, { rate: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder={invoice.type === 'service' ? 'Rate' : 'Price'}
@@ -340,11 +332,17 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
                   />
                 </div>
                 <div className="md:col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    Amount
+                  </label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
                     {invoice.currency.symbol}{item.amount.toFixed(invoice.currency.decimal_digits)}
                   </div>
                 </div>
                 <div className="md:col-span-1">
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    &nbsp;
+                  </label>
                   <button
                     onClick={() => removeItem(item.id)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
