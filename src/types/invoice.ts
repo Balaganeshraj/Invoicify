@@ -27,6 +27,7 @@ export interface InvoiceTheme {
   secondaryColor: string;
   fontFamily: string;
   logo?: string;
+  logoSize?: { width: number; height: number };
 }
 
 export interface Invoice {

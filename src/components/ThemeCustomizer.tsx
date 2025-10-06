@@ -11,6 +11,7 @@ interface ThemeCustomizerProps {
 export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ theme, onThemeChange }) => {
   const [showPrimaryPicker, setShowPrimaryPicker] = useState(false);
   const [showSecondaryPicker, setShowSecondaryPicker] = useState(false);
+  const [logoSize, setLogoSize] = useState({ width: 192, height: 144 });
 
   const fonts = [
     { name: 'Inter', value: 'Inter, sans-serif' },
@@ -31,12 +32,22 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ theme, onTheme
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
+        // Get image dimensions
+        const img = new Image();
+        img.onload = () => {
+          setLogoSize({ width: img.width, height: img.height });
+        };
+        img.src = result;
         onThemeChange({ ...theme, logo: result });
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleLogoSizeChange = (dimension: 'width' | 'height', value: number) => {
+    setLogoSize(prev => ({ ...prev, [dimension]: value }));
+    onThemeChange({ ...theme, logoSize: { ...logoSize, [dimension]: value } });
+  };
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <div className="flex items-center mb-4">
@@ -52,11 +63,21 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ theme, onTheme
           </label>
           <div className="flex items-center space-x-4">
             {theme.logo && (
-              <div className="w-24 h-24 border rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
+              <div 
+                className="border rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden"
+                style={{ 
+                  width: Math.min(logoSize.width / 2, 120), 
+                  height: Math.min(logoSize.height / 2, 120) 
+                }}
+              >
                 <img 
                   src={theme.logo} 
                   alt="Company Logo" 
-                  className="max-w-full max-h-full object-contain"
+                  className="object-contain"
+                  style={{ 
+                    width: Math.min(logoSize.width / 2, 120), 
+                    height: Math.min(logoSize.height / 2, 120) 
+                  }}
                 />
               </div>
             )}
@@ -79,9 +100,80 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ theme, onTheme
               </button>
             )}
           </div>
+          
+          {/* Logo Size Controls */}
+          {theme.logo && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Logo Size Adjustment</h4>
+              <div className="text-xs text-gray-500 mb-3">
+                Original: {logoSize.width} × {logoSize.height}px
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Display Width (px)
+                  </label>
+                  <input
+                    type="range"
+                    min="50"
+                    max="400"
+                    value={logoSize.width}
+                    onChange={(e) => handleLogoSizeChange('width', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="text-xs text-gray-500 mt-1 text-center">
+                    {logoSize.width}px
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">
+                    Display Height (px)
+                  </label>
+                  <input
+                    type="range"
+                    min="30"
+                    max="300"
+                    value={logoSize.height}
+                    onChange={(e) => handleLogoSizeChange('height', parseInt(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                  <div className="text-xs text-gray-500 mt-1 text-center">
+                    {logoSize.height}px
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-between mt-4">
+                <button
+                  onClick={() => setLogoSize({ width: 192, height: 144 })}
+                  className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                >
+                  Reset to Default
+                </button>
+                <button
+                  onClick={() => {
+                    const aspectRatio = logoSize.width / logoSize.height;
+                    if (aspectRatio > 1) {
+                      // Landscape - fit to width
+                      setLogoSize({ width: 192, height: Math.round(192 / aspectRatio) });
+                    } else {
+                      // Portrait - fit to height
+                      setLogoSize({ width: Math.round(144 * aspectRatio), height: 144 });
+                    }
+                  }}
+                  className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors"
+                >
+                  Auto Fit
+                </button>
+              </div>
+            </div>
+          )}
+          
           {theme.logo && (
             <p className="text-xs text-gray-500 mt-2">
-              Logo will appear larger in the invoice preview and print output
+              Adjust the size above to control how your logo appears in the invoice
             </p>
           )}
         </div>

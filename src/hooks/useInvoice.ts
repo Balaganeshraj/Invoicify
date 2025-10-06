@@ -40,7 +40,8 @@ const createInitialInvoice = (): Invoice => {
     theme: {
       primaryColor: '#3b82f6',
       secondaryColor: '#64748b',
-      fontFamily: 'Inter, sans-serif'
+      fontFamily: 'Inter, sans-serif',
+      logoSize: { width: 192, height: 144 }
     }
   };
 };

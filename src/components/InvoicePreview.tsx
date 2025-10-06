@@ -39,11 +39,25 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
         <div className="text-right">
           {invoice.theme.logo ? (
             <div className="flex justify-end mb-4">
-              <div className="w-32 h-32 sm:w-40 sm:h-32 lg:w-48 lg:h-36 flex items-center justify-center">
+              <div 
+                className="flex items-center justify-center"
+                style={{
+                  width: invoice.theme.logoSize?.width || 192,
+                  height: invoice.theme.logoSize?.height || 144,
+                  maxWidth: '100%',
+                  maxHeight: '200px'
+                }}
+              >
                 <img 
                   src={invoice.theme.logo} 
                   alt="Company Logo" 
-                  className="max-w-full max-h-full object-contain"
+                  className="object-contain"
+                  style={{
+                    width: invoice.theme.logoSize?.width || 192,
+                    height: invoice.theme.logoSize?.height || 144,
+                    maxWidth: '100%',
+                    maxHeight: '100%'
+                  }}
                 />
               </div>
             </div>
