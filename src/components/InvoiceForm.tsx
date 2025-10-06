@@ -324,11 +324,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
                   </label>
                   <input
                     type="number"
-                    value={item.description}
+                    value={item.rate}
                     onChange={(e) => updateItem(item.id, { rate: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder={invoice.type === 'service' ? 'Rate' : 'Price'}
                     step="0.01"
+                    min="0"
                   />
                 </div>
                 <div className="md:col-span-2">

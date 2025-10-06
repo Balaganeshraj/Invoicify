@@ -17,7 +17,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ invoice }) => {
   return (
     <div 
       id="invoice-preview" 
-      className="bg-white p-8 shadow-lg max-w-4xl mx-auto print:shadow-none print:max-w-none"
+      className="bg-white shadow-lg mx-auto print:shadow-none a4-page"
       style={themeStyles}
     >
       {/* Header */}

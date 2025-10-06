@@ -6,9 +6,42 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Lato:wght@300;400;700&family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
 
 /* Print styles */
+/* A4 Page Setup */
+.a4-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 20mm;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: white;
+}
+
+@media screen {
+  .a4-page {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+  }
+}
+
 @media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  
   body {
     background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .a4-page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    padding: 15mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    page-break-after: avoid !important;
   }
   
   .print\:hidden {
@@ -37,10 +70,10 @@
     position: absolute;
     left: 0;
     top: 0;
-    width: 100% !important;
-    max-width: none !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
     margin: 0 !important;
-    padding: 20px !important;
+    padding: 15mm !important;
     box-shadow: none !important;
   }
 
@@ -59,10 +92,16 @@
     page-break-after: auto;
   }
 
-  /* Ensure colors print correctly */
-  #invoice-preview * {
-    -webkit-print-color-adjust: exact !important;
-    color-adjust: exact !important;
+  /* Table styling for print */
+  #invoice-preview table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+  
+  #invoice-preview th,
+  #invoice-preview td {
+    padding: 8px !important;
+    border-bottom: 1px solid #e5e7eb !important;
   }
 }
 

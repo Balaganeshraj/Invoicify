@@ -17,8 +17,8 @@ export const exportToPDF = async (elementId: string, filename: string = 'invoice
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
-      width: element.scrollWidth,
-      height: element.scrollHeight
+      width: 794, // A4 width in pixels at 96 DPI (210mm)
+      height: 1123 // A4 height in pixels at 96 DPI (297mm)
     });
 
     // Restore interactive elements
@@ -27,10 +27,14 @@ export const exportToPDF = async (elementId: string, filename: string = 'invoice
     });
 
     const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
     
-    const imgWidth = 210;
-    const pageHeight = 295;
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 297; // A4 height in mm
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     let heightLeft = imgHeight;
 
@@ -68,8 +72,8 @@ export const exportToJPEG = async (elementId: string, filename: string = 'invoic
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#ffffff',
-      width: element.scrollWidth,
-      height: element.scrollHeight
+      width: 794, // A4 width in pixels at 96 DPI
+      height: 1123 // A4 height in pixels at 96 DPI
     });
 
     // Restore interactive elements
