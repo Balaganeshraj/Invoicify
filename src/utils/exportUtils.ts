@@ -36,8 +36,8 @@ export const exportToPDF = async (elementId: string, filename: string = 'invoice
 
     // Restore logo styles
     logoElements.forEach(logo => {
-      (logo as HTMLElement).style.maxWidth = '';
-      (logo as HTMLElement).style.maxHeight = '';
+      (logo as HTMLElement).style.width = '';
+      (logo as HTMLElement).style.height = '';
       (logo as HTMLElement).style.objectFit = '';
     });
 
@@ -85,8 +85,8 @@ export const exportToJPEG = async (elementId: string, filename: string = 'invoic
     // Ensure logo is properly sized for JPEG export
     const logoElements = element.querySelectorAll('img[alt="Company Logo"]');
     logoElements.forEach(logo => {
-      (logo as HTMLElement).style.width = '60mm';
-      (logo as HTMLElement).style.height = '40mm';
+      (logo as HTMLElement).style.maxWidth = '60mm';
+      (logo as HTMLElement).style.maxHeight = '40mm';
       (logo as HTMLElement).style.objectFit = 'contain';
     });
 
