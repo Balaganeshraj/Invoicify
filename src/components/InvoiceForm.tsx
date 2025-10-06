@@ -31,7 +31,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
     const updatedItems = invoice.items.map(item => {
       if (item.id === id) {
         const updatedItem = { ...item, ...updates };
-        updatedItem.amount = updatedItem.quantity * updatedItem.rate;
+        updatedItem.amount = (updatedItem.quantity || 0) * (updatedItem.rate || 0);
         return updatedItem;
       }
       return item;
@@ -46,7 +46,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
   const handleServiceChange = (id: string, description: string, rate?: number) => {
     const updates: Partial<InvoiceItem> = { description };
     if (rate && rate > 0) {
-      updates.rate = rate;
+      updates.rate = parseFloat(rate.toString()) || 0;
     }
     updateItem(id, updates);
   };
@@ -311,11 +311,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
                   <input
                     type="number"
                     value={item.quantity}
-                    onChange={(e) => updateItem(item.id, { quantity: Number(e.target.value) })}
+                   onChange={(e) => updateItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder={invoice.type === 'service' ? 'Hours' : 'Qty'}
                     min="0"
                     step="0.1"
+                   inputMode="decimal"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -325,11 +326,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
                   <input
                     type="number"
                     value={item.rate}
-                    onChange={(e) => updateItem(item.id, { rate: Number(e.target.value) })}
+                   onChange={(e) => updateItem(item.id, { rate: parseFloat(e.target.value) || 0 })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder={invoice.type === 'service' ? 'Rate' : 'Price'}
                     step="0.01"
                     min="0"
+                   inputMode="decimal"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -337,7 +339,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
                     Amount
                   </label>
                   <div className="px-3 py-2 bg-gray-50 border border-gray-300 rounded-md text-gray-700">
-                    {invoice.currency.symbol}{item.amount.toFixed(invoice.currency.decimal_digits)}
+                   {invoice.currency.symbol}{(item.amount || 0).toFixed(invoice.currency.decimal_digits)}
                   </div>
                 </div>
                 <div className="md:col-span-1">
@@ -381,12 +383,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ invoice, updateInvoice
               <input
                 type="number"
                 value={invoice.taxRate}
-                onChange={(e) => updateInvoice({ taxRate: Number(e.target.value) })}
+               onChange={(e) => updateInvoice({ taxRate: parseFloat(e.target.value) || 0 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="0"
                 step="0.1"
                 min="0"
                 max="100"
+               inputMode="decimal"
               />
             </div>
           </div>

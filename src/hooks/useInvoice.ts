@@ -56,7 +56,7 @@ export const useInvoice = () => {
     const newItem: InvoiceItem = {
       ...item,
       id: Date.now().toString(),
-      amount: item.quantity * item.rate
+      amount: (item.quantity || 0) * (item.rate || 0)
     };
     setInvoice(prev => ({
       ...prev,
@@ -70,8 +70,8 @@ export const useInvoice = () => {
 
   // Calculate totals whenever items or tax rate changes
   useEffect(() => {
-    const subtotal = invoice.items.reduce((sum, item) => sum + item.amount, 0);
-    const tax = subtotal * (invoice.taxRate / 100);
+    const subtotal = invoice.items.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const tax = subtotal * ((invoice.taxRate || 0) / 100);
     const total = subtotal + tax;
 
     setInvoice(prev => ({
