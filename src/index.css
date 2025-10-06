@@ -354,4 +354,26 @@ body {
     width: 100vw;
     margin-left: calc(-50vw + 50%);
   }
+  
+  /* Mobile logo optimization */
+  #invoice-preview img[alt="Company Logo"] {
+    max-width: 120px !important;
+    max-height: 80px !important;
+  }
+}
+
+/* Tablet logo optimization */
+@media (min-width: 641px) and (max-width: 1024px) {
+  #invoice-preview img[alt="Company Logo"] {
+    max-width: 160px !important;
+    max-height: 100px !important;
+  }
+}
+
+/* Desktop logo optimization */
+@media (min-width: 1025px) {
+  #invoice-preview img[alt="Company Logo"] {
+    max-width: 192px !important;
+    max-height: 144px !important;
+  }
 }

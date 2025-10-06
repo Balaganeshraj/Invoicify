@@ -12,6 +12,14 @@ export const exportToPDF = async (elementId: string, filename: string = 'invoice
       (el as HTMLElement).style.display = 'none';
     });
 
+    // Ensure logo is properly sized for PDF export
+    const logoElements = element.querySelectorAll('img[alt="Company Logo"]');
+    logoElements.forEach(logo => {
+      (logo as HTMLElement).style.maxWidth = '60mm';
+      (logo as HTMLElement).style.maxHeight = '40mm';
+      (logo as HTMLElement).style.objectFit = 'contain';
+    });
+
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
@@ -24,6 +32,13 @@ export const exportToPDF = async (elementId: string, filename: string = 'invoice
     // Restore interactive elements
     interactiveElements.forEach(el => {
       (el as HTMLElement).style.display = '';
+    });
+
+    // Restore logo styles
+    logoElements.forEach(logo => {
+      (logo as HTMLElement).style.maxWidth = '';
+      (logo as HTMLElement).style.maxHeight = '';
+      (logo as HTMLElement).style.objectFit = '';
     });
 
     const imgData = canvas.toDataURL('image/png');
@@ -67,6 +82,14 @@ export const exportToJPEG = async (elementId: string, filename: string = 'invoic
       (el as HTMLElement).style.display = 'none';
     });
 
+    // Ensure logo is properly sized for JPEG export
+    const logoElements = element.querySelectorAll('img[alt="Company Logo"]');
+    logoElements.forEach(logo => {
+      (logo as HTMLElement).style.maxWidth = '60mm';
+      (logo as HTMLElement).style.maxHeight = '40mm';
+      (logo as HTMLElement).style.objectFit = 'contain';
+    });
+
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
@@ -79,6 +102,13 @@ export const exportToJPEG = async (elementId: string, filename: string = 'invoic
     // Restore interactive elements
     interactiveElements.forEach(el => {
       (el as HTMLElement).style.display = '';
+    });
+
+    // Restore logo styles
+    logoElements.forEach(logo => {
+      (logo as HTMLElement).style.maxWidth = '';
+      (logo as HTMLElement).style.maxHeight = '';
+      (logo as HTMLElement).style.objectFit = '';
     });
 
     const link = document.createElement('a');

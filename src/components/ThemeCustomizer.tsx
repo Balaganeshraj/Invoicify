@@ -52,7 +52,13 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ theme, onTheme
           </label>
           <div className="flex items-center space-x-4">
             {theme.logo && (
-              <img src={theme.logo} alt="Logo" className="w-16 h-16 object-contain border rounded" />
+              <div className="w-24 h-24 border rounded-lg bg-gray-50 flex items-center justify-center overflow-hidden">
+                <img 
+                  src={theme.logo} 
+                  alt="Company Logo" 
+                  className="max-w-full max-h-full object-contain"
+                />
+              </div>
             )}
             <label className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 cursor-pointer transition-colors">
               <Upload className="w-4 h-4 mr-2" />
@@ -64,7 +70,20 @@ export const ThemeCustomizer: React.FC<ThemeCustomizerProps> = ({ theme, onTheme
                 className="hidden"
               />
             </label>
+            {theme.logo && (
+              <button
+                onClick={() => onThemeChange({ ...theme, logo: undefined })}
+                className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors text-sm"
+              >
+                Remove
+              </button>
+            )}
           </div>
+          {theme.logo && (
+            <p className="text-xs text-gray-500 mt-2">
+              Logo will appear larger in the invoice preview and print output
+            </p>
+          )}
         </div>
 
         {/* Primary Color */}
